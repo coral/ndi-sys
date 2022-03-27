@@ -1,6 +1,6 @@
 # ndi-sys
 
-FFI bindings for the NDI
+FFI bindings for the NDI SDK V5
 
 ## Normal use
 
