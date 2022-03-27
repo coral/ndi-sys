@@ -39,7 +39,7 @@ fn find_sdk() -> Option<String> {
 fn main() {
     let os = env::var("CARGO_CFG_TARGET_OS").expect("Could not get OS");
 
-    #[cfg(target_os = "bindings")]
+    #[cfg(feature = "bindings")]
     {
         //Generate fresh bindings
         let sdk = find_sdk().expect(
@@ -55,9 +55,10 @@ fn main() {
 
         let bindings = bindgen::Builder::default()
             .header(sdk.join(include_file).to_str().unwrap())
-            .allowlist_function("NDIlib_v5_load")
-            .allowlist_type(".*")
-            .allowlist_var(".*")
+            //.allowlist_function("NDIlib_v5_load")
+            //.allowlist_type(".*")
+            //.allowlist_var(".*")
+            .clang_arg("-fdeclspec")
             .generate()
             .expect("Unable to generate bindings");
 
