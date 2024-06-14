@@ -18,7 +18,7 @@ fn find_sdk() -> Option<String> {
     #[cfg(target_os = "macos")]
     {
         // Try the standard SDK install location on Mac OS
-        let std_location = Path::new("/Library/NDI SDK for macOS/");
+        let std_location = Path::new("/Library/NDI SDK for macOS 6/");
         if std_location.exists() {
             return std_location.to_str().map(|s| s.to_string());
         }
@@ -27,7 +27,16 @@ fn find_sdk() -> Option<String> {
     #[cfg(target_os = "windows")]
     {
         // Try the standard SDK install location on Windows
-        let std_location = Path::new("C:/Program Files/NDI/NDI 5 SDK");
+        let std_location = Path::new("C:\\NDI\\NDI 6 SDK");
+        if std_location.exists() {
+            return std_location.to_str().map(|s| s.to_string());
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Try the standard SDK install location on Linux
+        let std_location = Path::new("/usr/local/NDI SDK for Linux 6/");
         if std_location.exists() {
             return std_location.to_str().map(|s| s.to_string());
         }
@@ -41,16 +50,18 @@ fn main() {
 
     #[cfg(feature = "bindings")]
     {
-        //Generate fresh bindings
+        // Generate fresh bindings
         let sdk = find_sdk().expect(
             "Could not find the SDK to generate bindings. Please set
-        the NDI_SDK_DIR env variable to the root of the SDK install.",
+            the NDI_SDK_DIR env variable to the root of the SDK install.",
         );
         let sdk = Path::new(&sdk);
 
         let include_file = match os.as_str() {
             "windows" => "include/Processing.NDI.Lib.h",
-            _ => "include/Processing.NDI.Lib.h",
+            "linux" => "include/Processing.NDI.Lib.h",
+            "macos" => "include/Processing.NDI.Lib.h",
+            _ => panic!("Unsupported OS for NDI"),
         };
 
         let bindings = bindgen::Builder::default()
@@ -86,7 +97,7 @@ fn setup_win() {
         let source_path = Path::new(&path);
         let dest_path = Path::new(&env::var("OUT_DIR").unwrap()).join("../../../deps");
         fs::copy(
-            source_path.join("..\\..\\NewTek NDI 5.0 SDK\\Lib\\x64\\Processing.NDI.Lib.x64.lib"),
+            source_path.join("..\\..\\NDI 6 SDK\\Lib\\x64\\Processing.NDI.Lib.x64.lib"),
             dest_path.join("Processing.NDI.Lib.x64.lib"),
         )
         .expect("copy Processing.NDI.Lib.x64.lib");
@@ -111,16 +122,20 @@ fn setup_linux() {
         let source_path = Path::new(&path);
         let dest_path = Path::new(&env::var("OUT_DIR").unwrap()).join("../../../deps");
         fs::copy(
-            source_path.join("libndi.so.5"),
-            dest_path.join("libndi.so.5"),
+            source_path.join("libndi.so.6"),
+            dest_path.join("libndi.so.6"),
         )
-        .expect("copy libndi.so.5");
+        .expect("copy libndi.so.6");
 
-        let sl_res =
-            std::os::unix::fs::symlink(Path::new("libndi.so.5"), dest_path.join("libndi.so"));
-        if let Err(e) = sl_res {
-            if e.kind() != ErrorKind::AlreadyExists {
-                panic!("Unknown error: {}", e);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+            let sl_res =
+                symlink(Path::new("libndi.so.6"), dest_path.join("libndi.so"));
+            if let Err(e) = sl_res {
+                if e.kind() != ErrorKind::AlreadyExists {
+                    panic!("Unknown error: {}", e);
+                }
             }
         }
     }
@@ -143,11 +158,15 @@ fn setup_macos() {
         )
         .expect("copy libndi.dylib");
 
-        let sl_res =
-            std::os::unix::fs::symlink(Path::new("libndi.dylib"), dest_path.join("libndi.dylib"));
-        if let Err(e) = sl_res {
-            if e.kind() != ErrorKind::AlreadyExists {
-                panic!("Unknown error: {}", e);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+            let sl_res =
+                symlink(Path::new("libndi.dylib"), dest_path.join("libndi.dylib"));
+            if let Err(e) = sl_res {
+                if e.kind() != ErrorKind::AlreadyExists {
+                    panic!("Unknown error: {}", e);
+                }
             }
         }
     }
@@ -160,7 +179,7 @@ fn setup_macos() {
 
 fn find_library() -> Option<String> {
     // Follow the 'recommended' install path
-    if let Ok(path) = env::var("NDI_RUNTIME_DIR_V5") {
+    if let Ok(path) = env::var("NDI_RUNTIME_DIR_V6") {
         if Path::new(&path).exists() {
             return Some(path);
         }
@@ -176,7 +195,16 @@ fn find_library() -> Option<String> {
     #[cfg(target_os = "macos")]
     {
         // Try the standard SDK install location on Mac OS
-        let std_location = Path::new("/Library/NDI SDK for macOS/lib/macOS/");
+        let std_location = Path::new("/Library/NDI SDK for macOS 6/lib/macOS/");
+        if std_location.exists() {
+            return std_location.to_str().map(|s| s.to_string());
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Try the standard SDK install location on Linux
+        let std_location = Path::new("/usr/local/NDI SDK for Linux 6/lib/");
         if std_location.exists() {
             return std_location.to_str().map(|s| s.to_string());
         }

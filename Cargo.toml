@@ -16,7 +16,7 @@ categories = ['external-ffi-bindings']
 [dependencies]
 
 [build-dependencies]
-bindgen = {version = "0.59.2", optional = true}
+bindgen = {version = "0.69.4", optional = true}
 
 [features]
 default = ["dynamic_link"]
